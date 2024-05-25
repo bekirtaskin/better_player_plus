@@ -64,11 +64,16 @@ class _VideoProgressBarState
     super.deactivate();
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     final bool enableProgressBarDrag = betterPlayerController!
         .betterPlayerConfiguration.controlsConfiguration.enableProgressBarDrag;
-
+    final double progressBarHeight = betterPlayerController?.betterPlayerConfiguration.controlsConfiguration.playerTheme ==
+        BetterPlayerTheme.bottom_progressbar
+          ? 15
+          : (MediaQuery.of(context).size.height / 2);
     return GestureDetector(
       onHorizontalDragStart: (DragStartDetails details) {
         if (!controller!.value.initialized || !enableProgressBarDrag) {
@@ -122,13 +127,14 @@ class _VideoProgressBarState
       },
       child: Center(
         child: Container(
-          height: MediaQuery.of(context).size.height / 2,
+          height: progressBarHeight,
           width: MediaQuery.of(context).size.width,
           color: Colors.transparent,
           child: CustomPaint(
             painter: _ProgressBarPainter(
               _getValue(),
               widget.colors,
+              betterPlayerController?.betterPlayerConfiguration.controlsConfiguration.playerTheme ?? BetterPlayerTheme.cupertino
             ),
           ),
         ),
@@ -185,10 +191,11 @@ class _VideoProgressBarState
 }
 
 class _ProgressBarPainter extends CustomPainter {
-  _ProgressBarPainter(this.value, this.colors);
+  _ProgressBarPainter(this.value, this.colors, this.playerTheme);
 
   VideoPlayerValue value;
   BetterPlayerProgressColors colors;
+  BetterPlayerTheme playerTheme;
 
   @override
   bool shouldRepaint(CustomPainter painter) {
@@ -197,7 +204,7 @@ class _ProgressBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const height = 2.0;
+    var height = playerTheme == BetterPlayerTheme.bottom_progressbar ? 4.0 : 2.0;
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -249,9 +256,10 @@ class _ProgressBarPainter extends CustomPainter {
       ),
       colors.playedPaint,
     );
+    var circleRadius = playerTheme == BetterPlayerTheme.bottom_progressbar ? height : height * 3;
     canvas.drawCircle(
       Offset(playedPart, size.height / 2 + height / 2),
-      height * 3,
+      circleRadius,
       colors.handlePaint,
     );
   }

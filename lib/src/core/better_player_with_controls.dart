@@ -10,6 +10,8 @@ import 'package:better_player_plus/src/subtitles/better_player_subtitles_drawer.
 import 'package:better_player_plus/src/video_player/video_player.dart';
 import 'package:flutter/material.dart';
 
+import '../controls/better_player_material_progress_bar.dart';
+
 class BetterPlayerWithControls extends StatefulWidget {
   final BetterPlayerController? controller;
 
@@ -91,15 +93,41 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     }
 
     aspectRatio ??= 16 / 9;
-    final innerContainer = Container(
-      width: double.infinity,
-      color: betterPlayerController
-          .betterPlayerConfiguration.controlsConfiguration.backgroundColor,
-      child: AspectRatio(
-        aspectRatio: aspectRatio,
-        child: _buildPlayerWithControls(betterPlayerController, context),
-      ),
-    );
+    late final innerContainer;
+    if (betterPlayerController.betterPlayerControlsConfiguration.playerTheme == BetterPlayerTheme.bottom_progressbar){
+      innerContainer = LayoutBuilder(
+        builder: (context, constraints) {
+          return SizedBox(
+            height: constraints.maxHeight,
+            child: Stack(
+              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Center(
+                  child: Container(
+                    width: double.infinity,
+                    color: betterPlayerController.betterPlayerConfiguration.controlsConfiguration.backgroundColor,
+                    child: _buildPlayerWithControls(betterPlayerController, context, aspectRatio!),
+                  ),
+                ),
+                if (betterPlayerController.betterPlayerControlsConfiguration.playerTheme == BetterPlayerTheme.bottom_progressbar)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: _buildProgressBar(betterPlayerController.videoPlayerController!, betterPlayerController, controlsConfiguration),
+                  )
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      innerContainer = Container(
+        width: double.infinity,
+        color: betterPlayerController.betterPlayerConfiguration.controlsConfiguration.backgroundColor,
+        child: _buildPlayerWithControls(betterPlayerController, context, aspectRatio),
+      );
+    }
 
     if (betterPlayerController.betterPlayerConfiguration.expandToFill) {
       return Center(child: innerContainer);
@@ -109,7 +137,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
   }
 
   Container _buildPlayerWithControls(
-      BetterPlayerController betterPlayerController, BuildContext context) {
+      BetterPlayerController betterPlayerController, BuildContext context, double aspectRatio) {
     final configuration = betterPlayerController.betterPlayerConfiguration;
     var rotation = configuration.rotation;
 
@@ -126,28 +154,31 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
         betterPlayerController.betterPlayerConfiguration.placeholderOnTop;
     // ignore: avoid_unnecessary_containers
     return Container(
-      child: Stack(
-        fit: StackFit.passthrough,
-        children: <Widget>[
-          if (placeholderOnTop) _buildPlaceholder(betterPlayerController),
-          Transform.rotate(
-            angle: rotation * pi / 180,
-            child: _BetterPlayerVideoFitWidget(
-              betterPlayerController,
-              betterPlayerController.getFit(),
+      child: AspectRatio(
+        aspectRatio: aspectRatio,
+        child: Stack(
+          fit: StackFit.passthrough,
+          children: <Widget>[
+            if (placeholderOnTop) _buildPlaceholder(betterPlayerController),
+            Transform.rotate(
+              angle: rotation * pi / 180,
+              child: _BetterPlayerVideoFitWidget(
+                betterPlayerController,
+                betterPlayerController.getFit(),
+              ),
             ),
-          ),
-          betterPlayerController.betterPlayerConfiguration.overlay ??
-              Container(),
-          BetterPlayerSubtitlesDrawer(
-            betterPlayerController: betterPlayerController,
-            betterPlayerSubtitlesConfiguration: subtitlesConfiguration,
-            subtitles: betterPlayerController.subtitlesLines,
-            playerVisibilityStream: playerVisibilityStreamController.stream,
-          ),
-          if (!placeholderOnTop) _buildPlaceholder(betterPlayerController),
-          _buildControls(context, betterPlayerController),
-        ],
+            betterPlayerController.betterPlayerConfiguration.overlay ??
+                Container(),
+            BetterPlayerSubtitlesDrawer(
+              betterPlayerController: betterPlayerController,
+              betterPlayerSubtitlesConfiguration: subtitlesConfiguration,
+              subtitles: betterPlayerController.subtitlesLines,
+              playerVisibilityStream: playerVisibilityStreamController.stream,
+            ),
+            if (!placeholderOnTop) _buildPlaceholder(betterPlayerController),
+            _buildControls(context, betterPlayerController),
+          ],
+        ),
       ),
     );
   }
@@ -197,6 +228,23 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     return BetterPlayerCupertinoControls(
       onControlsVisibilityChanged: onControlsVisibilityChanged,
       controlsConfiguration: controlsConfiguration,
+    );
+  }
+
+  Widget _buildProgressBar(
+      VideoPlayerController controller, BetterPlayerController betterPlayerController, BetterPlayerControlsConfiguration controlsConfiguration) {
+    return Container(
+      alignment: Alignment.bottomCenter,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: BetterPlayerMaterialVideoProgressBar(
+        controller,
+        betterPlayerController,
+        colors: BetterPlayerProgressColors(
+            playedColor: controlsConfiguration.progressBarPlayedColor,
+            handleColor: controlsConfiguration.progressBarHandleColor,
+            bufferedColor: controlsConfiguration.progressBarBufferedColor,
+            backgroundColor: controlsConfiguration.progressBarBackgroundColor),
+      ),
     );
   }
 
