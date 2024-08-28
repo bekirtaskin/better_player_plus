@@ -13,6 +13,7 @@ import android.os.Looper
 import android.util.Log
 import android.util.LongSparseArray
 import android.util.Rational
+import android.view.SurfaceView
 import uz.shs.better_player_plus.BetterPlayerCache.releaseCache
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -61,6 +62,7 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             binding.textureRegistry
         )
         flutterState?.startListening(this)
+        binding.platformViewRegistry.registerViewFactory("com.jhomlala/better_player", BetterViewFactory(videoPlayers));
     }
 
 
@@ -100,9 +102,9 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         when (call.method) {
             INIT_METHOD -> disposeAllPlayers()
             CREATE_METHOD -> {
-                val handle = flutterState!!.textureRegistry!!.createSurfaceTexture()
+                val handle = SurfaceView(flutterState!!.applicationContext)
                 val eventChannel = EventChannel(
-                    flutterState?.binaryMessenger, EVENTS_CHANNEL + handle.id()
+                    flutterState?.binaryMessenger, EVENTS_CHANNEL + handle.id
                 )
                 var customDefaultLoadControl: CustomDefaultLoadControl? = null
                 if (call.hasArgument(MIN_BUFFER_MS) && call.hasArgument(MAX_BUFFER_MS) &&
@@ -120,7 +122,7 @@ class BetterPlayerPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                     flutterState?.applicationContext!!, eventChannel, handle,
                     customDefaultLoadControl, result
                 )
-                videoPlayers.put(handle.id(), player)
+                videoPlayers.put(handle.id.toLong(), player)
             }
 
             PRE_CACHE_METHOD -> preCache(call, result)
