@@ -1,3 +1,6 @@
+# Fork Purpose
+Modify theme and add new theme options for subtitles
+
 # Better Player Plus
 [![pub package](https://img.shields.io/pub/v/better_player.svg)](https://pub.dartlang.org/packages/better_player)
 [![pub package](https://img.shields.io/github/license/jhomlala/betterplayer.svg?style=flat)](https://github.com/jhomlala/betterplayer)
